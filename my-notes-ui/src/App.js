@@ -22,42 +22,73 @@ function App() {
     setSelectedNote({...note});
   };
 
+  const handleSubmit = function(event){
+    event.preventDefault();
+
+    axios.put(API_URL + "api/notes/" + selectedNote.id, selectedNote)
+      .then(function(response){
+        const newNotes = [ ...notes ];
+        const i = newNotes.findIndex(x => x.id == response.data.id);
+        newNotes[i] = response.data;
+        setNotes(newNotes);
+    });
+  };
+
+  const handleNewClick = function(event){
+    axios.post(API_URL + "api/notes", {title:"New Note", content:""})
+      .then(function(response){
+        const newNotes = [...notes];
+        newNotes.push(response.data);
+        setNotes(newNotes);
+        selectNote(response.data);
+      });
+  };
+
+  const handleDeleteClick = function(event){
+    axios.delete(API_URL + "api/notes/" + selectedNote.id)
+      .then(function (response) {
+        setNotes(notes.filter(x => x.id != selectedNote.id));
+        setSelectedNote({id:0, title:"", content:""});
+      });
+  };
+
   return (
     <div className="App">
       <Container fluid="md" className='mt-3'>
         <Row>
           <Col sm={4} lg={3}>
             <div className='d-flex'>
-              <h2 className='me-auto'>Notlarım</h2>
-              <Button variant='success'>
-                New
-              </Button>
+              <h2 className='me-auto'>My Notes</h2>
+              <Button variant='success' onClick={handleNewClick}>New</Button>
             </div>
             <ListGroup className="mt-3">
               {notes.map((note,index) => 
-                <ListGroup.Item action active={note.id == selectedNote.id} onClick={() => selectedNote(note)}>
+                <ListGroup.Item key={index} action active={note.id == selectedNote.id} onClick={() => selectNote(note)}>
                   {note.title}
                 </ListGroup.Item>
               )}
-            </ListGroup>,
+            </ListGroup>
           </Col>
-          {selectedNote &&
+          {selectedNote.id != 0 &&
             <Col sm={8} lg={9}>
               
-              <Form.Control type="text" placeholder="Title" value={selectedNote.title} onChange={(e) => 
-                setSelectedNote({...selectedNote, title : e.target.value})} />
-              
-              <Form.Control as="textarea" rows={9} placeholder="Content" value={selectedNote.content} className='my-3' onChange={(e) => 
-                setSelectedNote({...selectedNote, content : e.target.value})}/>
-                <div>
-                  {selectedNote.title}
-                  {selectedNote.content}  
-                </div>
+              <form onSubmit={handleSubmit}>
+                <Form.Control type="text" placeholder="Title" value={selectedNote.title} onChange={(e) => 
+                  setSelectedNote({...selectedNote, title : e.target.value})}  required/>
+                
+                <Form.Control as="textarea" rows={9} placeholder="Content" value={selectedNote.content} className='my-3' onChange={(e) => 
+                  setSelectedNote({...selectedNote, content : e.target.value})}/>
+                  <div>
+                    {selectedNote.title}
+                    -----
+                    {selectedNote.content}  
+                  </div>
 
-              <div className='mt-3 d-flex justify-content-end'>
-                <Button variant='danger' className='me-2'>Sil</Button>
-                <Button>Kaydet</Button>
-              </div>
+                <div className='mt-3 d-flex justify-content-end'>
+                  <Button variant='danger' className='me-2' onClick={handleDeleteClick}>Delete</Button>
+                  <Button type="submit">Save</Button>
+                </div>
+              </form>
             </Col>
           }
         </Row>
